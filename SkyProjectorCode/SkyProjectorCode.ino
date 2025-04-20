@@ -2,15 +2,15 @@
 
 Adafruit_PWMServoDriver pwmDriver = Adafruit_PWMServoDriver();
 
-// MOTORS
-// PIN 1 = 3
-// PIN 2 = 6
-// PIN 3 = Blank
-
 // LEDS
-// PIN 1-3 = blank
-// PIN 4-6 = 3
-// PIN 7-9 = Blank
+// PIN 0-2 = no label
+// PIN 3-5 = label three
+// PIN 6-8 = label six
+
+// MOTORS
+// PIN 9 = label three
+// PIN 10 = label six
+// PIN 11 = no label
 
 const int SWITCH_PIN = 12;
 const int LED_POT_PIN = A1;
@@ -112,7 +112,7 @@ bool checkIsOn() {
     if (switchTime == 0) {
       switchTime = millis();
     } else if (millis() - switchTime >= TIME_BEFORE_SWITCH_REGISTER) {
-      switchTime == 0;
+      switchTime = 0;
       if (isOn) {
         turnOff();
       } else {
@@ -249,7 +249,7 @@ void checkMotorPot() {
     motorMode = 1;
     rangeStart = 500;
     rangeEnd = 1022;
-  } else if (motorPotVal <= 499 && motorPotVal >= 100) {
+  } else if (motorPotVal <= 499 && motorPotVal >= 0) {
     motorMode = 2;
     rangeStart = 0;
     rangeEnd = 499;
@@ -268,9 +268,11 @@ void loopMotors() {
         normalizedSpeed *= MOTOR_DEPTH_SPEEDS[motor];
       }
 
-      int pwm = exponential(normalizedSpeed, MOTOR_MIN_PWM, maxAllowedPwm);
+      int maxPwm = max(MOTOR_MIN_PWM, maxAllowedPwm);
+
+      int pwm = exponential(normalizedSpeed, MOTOR_MIN_PWM, maxPwm);
       if (pwm >= 3475) {
-        pwm = maxAllowedPwm;
+        pwm = maxPwm;
       }
 
       pwmDriver.setPWM(motor + 9, 0, pwm);
