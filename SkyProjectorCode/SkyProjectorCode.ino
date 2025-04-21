@@ -213,8 +213,19 @@ void checkLedPot() {
     rangeEnd = POT_MAX;
   }
 
+  ledSpeedMod = calcSpeedMod(ledPotVal, rangeStart, rangeEnd);
+}
+
+float calcSpeedMod(int potVal, int rangeStart, int rangeEnd) {
   float resolution = 100.0;
-  ledSpeedMod = map(ledPotVal, rangeStart, rangeEnd, SPEED_MOD_MIN, SPEED_MOD_MAX * resolution) / resolution;
+  float upperCapPerc = 0.05;
+  float upperCap = rangeEnd - (rangeEnd - rangeStart) * upperCapPerc;
+
+  if (potVal >= upperCap) {
+    return SPEED_MOD_MAX;
+  }
+
+  return map(potVal, rangeStart, upperCap, SPEED_MOD_MIN, SPEED_MOD_MAX * resolution) / resolution;
 }
 
 void checkMotorPot() {
@@ -233,8 +244,7 @@ void checkMotorPot() {
     rangeEnd = POT_MAX;
   }
 
-  float resolution = 100.0;
-  motorSpeedMod = map(motorPotVal, rangeStart, rangeEnd, SPEED_MOD_MIN, SPEED_MOD_MAX * resolution) / resolution;
+  motorSpeedMod = calcSpeedMod(motorPotVal, rangeStart, rangeEnd);
 }
 
 void loopLeds() {
@@ -255,36 +265,25 @@ void loopLeds() {
     }
 
     int speedMod = calcExp(ledSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX);
-    if (speedMod >= SPEED_MOD_MAX * 0.95) {
-      speedMod = SPEED_MOD_MAX;
-    }
-
     for (int led = 0; led < 3; led++) {
       for (int color = 0; color < 3; color++) {
-        if (colorScope == 1 && color > 0) {
-          continue;
-        }
+        int pwm = setLedFadePwm(led, color, speedMod);
 
         int ledDriverIndex = led * 3 + color;
         if (!COLOR_MODES[colorMode][ledDriverIndex]) {
           continue;
         }
 
-        int pwm = setLedFadePwm(led, color, speedMod);
-
-        pwmDriver.setPWM(ledDriverIndex, 0, pwm);
-        if (colorScope == 1) {
-          pwmDriver.setPWM(ledDriverIndex + 1, 0, pwm);
-          pwmDriver.setPWM(ledDriverIndex + 2, 0, pwm);
+        if (colorScope == 0) {
+          pwmDriver.setPWM(ledDriverIndex, 0, pwm);
+        } else if (colorScope == 1) {
+          // All colors of led same pwm as first color.
+          pwmDriver.setPWM(ledDriverIndex, 0, ledPwms[led][0]);
         }
       }
     }
   } else if (ledMode == 2) {
     int speedMod = calcExp(ledSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX);
-    if (speedMod >= SPEED_MOD_MAX * 0.95) {
-      speedMod = SPEED_MOD_MAX;
-    }
-
     int timeBetweenColorChange = map(speedMod, SPEED_MOD_MIN, SPEED_MOD_MAX, LED_TOGGLE_TIME_MIN, LED_TOGGLE_TIME_MAX);
     // Flip because we start with the slowest changes.
     timeBetweenColorChange = LED_TOGGLE_TIME_MAX + LED_TOGGLE_TIME_MIN - timeBetweenColorChange;
@@ -353,6 +352,8 @@ int setLedFadePwm(int led, int color, float speedMod) {
     ledSpeedTimesBeforeChange[led][color] = random(LED_SPEED_CHANGE_TIME_MIN, LED_SPEED_CHANGE_TIME_MAX+1);
     ledSpeeds[led][color] = randomFloat(LED_SPEED_MIN, LED_SPEED_MAX+1);
   }
+
+  return pwm;
 }
 
 bool compareColorCombinations(bool* combination1, bool* combination2) {
@@ -382,10 +383,6 @@ void loopMotors() {
       }
 
       int pwm = calcExp(normalizedSpeedMod, MOTOR_MIN_PWM, PWM_MAX, 1.5);
-      if (pwm >= 3500) {
-        pwm = PWM_MAX;
-      }
-
       pwmDriver.setPWM(motor + 9, 0, pwm);
     }
   }
