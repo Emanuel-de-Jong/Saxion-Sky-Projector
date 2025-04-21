@@ -87,7 +87,7 @@ void setup() {
   pinMode(BTN_PIN, INPUT_PULLUP);
 
   pwmDriver.begin();
-  pwmDriver.setPWMFreq(500);
+  pwmDriver.setPWMFreq(300);
 
   // Led fade init
   for (int led = 0; led < 3; led++) {
@@ -104,7 +104,7 @@ float randomFloat(float min, float max) {
   float resolution = 100.0;
   int min_int = min * resolution;
   int max_int = max * resolution;
-  return random(min_int, max_int) / resolution;
+  return random(min_int, max_int + 1) / resolution;
 }
 
 void loop() {
@@ -250,7 +250,11 @@ void checkMotorPot() {
 void loopLeds() {
   if (ledMode == 0) {
     for (int color = 0; color < 9; color++) {
-      pwmDriver.setPWM(color, 0, PWM_MAX);
+      if (COLOR_MODES[colorMode][color]) {
+        pwmDriver.setPWM(color, 0, PWM_MAX);
+      } else {
+        pwmDriver.setPWM(color, 0, 0);
+      }
     }
   } else if (ledMode == 1) {
     // Brighten color mode colors on mode change to show the user which mode it is.
@@ -350,7 +354,7 @@ int setLedFadePwm(int led, int color, float speedMod) {
   if (millis() - ledSpeedChangeTimes[led][color] >= ledSpeedTimesBeforeChange[led][color]) {
     ledSpeedChangeTimes[led][color] = millis();
     ledSpeedTimesBeforeChange[led][color] = random(LED_SPEED_CHANGE_TIME_MIN, LED_SPEED_CHANGE_TIME_MAX+1);
-    ledSpeeds[led][color] = randomFloat(LED_SPEED_MIN, LED_SPEED_MAX+1);
+    ledSpeeds[led][color] = randomFloat(LED_SPEED_MIN, LED_SPEED_MAX);
   }
 
   return pwm;
@@ -377,12 +381,12 @@ void loopMotors() {
     clearMotors();
   } else {
     for (int motor = 0; motor < 3; motor++) {
-      float normalizedSpeedMod = motorSpeedMod / SPEED_MOD_MAX;
+      float speedMod = map(motorSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX, MOTOR_MIN_PWM, PWM_MAX);
       if (motorMode == 2) {
-        normalizedSpeedMod *= MOTOR_DEPTH_SPEEDS[motor];
+        speedMod *= MOTOR_DEPTH_SPEEDS[motor];
       }
 
-      int pwm = calcExp(normalizedSpeedMod, MOTOR_MIN_PWM, PWM_MAX, 1.5);
+      int pwm = calcExp(speedMod, MOTOR_MIN_PWM, PWM_MAX, 1.5);
       pwmDriver.setPWM(motor + 9, 0, pwm);
     }
   }
