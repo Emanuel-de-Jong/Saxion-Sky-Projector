@@ -52,13 +52,13 @@ const int SPEED_MOD_MIN = 1;
 const int SPEED_MOD_MAX = 100;
 
 const int LED_MIN_PWM = 200;
-const int LED_BASE_STEPS = 5;
+const int LED_BASE_STEPS = 15;
 const float LED_SPEED_MIN = 0.7;
 const float LED_SPEED_MAX = 1.3;
 const int LED_SPEED_CHANGE_TIME_MIN = 1000;
 const int LED_SPEED_CHANGE_TIME_MAX = 5000;
 const float LED_FADE_DEPTH_SPEEDS[] = {1.3, 1.0, 0.7};
-const int LED_TOGGLE_TIME_MIN = 50;
+const int LED_TOGGLE_TIME_MIN = 75;
 const int LED_TOGGLE_TIME_MAX = 2000;
 
 // 0=Static, 1=Fade, 2=Toggle
@@ -72,7 +72,7 @@ unsigned long ledSpeedChangeTimes[3][3];
 unsigned long lastColorChange = millis();
 bool lastColorCombination[9] = {};
 
-const int MOTOR_MIN_PWM = 800;
+const int MOTOR_MIN_PWM = 600;
 const float MOTOR_DEPTH_SPEEDS[] = {1.0, 0.8, 0.9};
 
 // 0=Off, 1=Global, 2=Depth
@@ -87,7 +87,7 @@ void setup() {
   pinMode(BTN_PIN, INPUT_PULLUP);
 
   pwmDriver.begin();
-  pwmDriver.setPWMFreq(300);
+  pwmDriver.setPWMFreq(100);
 
   // Led fade init
   for (int led = 0; led < 3; led++) {
@@ -218,7 +218,7 @@ void checkLedPot() {
 
 float calcSpeedMod(int potVal, int rangeStart, int rangeEnd) {
   float resolution = 100.0;
-  float upperCapPerc = 0.05;
+  float upperCapPerc = 0.12;
   float upperCap = rangeEnd - (rangeEnd - rangeStart) * upperCapPerc;
 
   if (potVal >= upperCap) {
@@ -268,7 +268,7 @@ void loopLeds() {
       }
     }
 
-    int speedMod = calcExp(ledSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX);
+    int speedMod = calcExp(ledSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX, 1.5);
     for (int led = 0; led < 3; led++) {
       for (int color = 0; color < 3; color++) {
         int pwm = setLedFadePwm(led, color, speedMod);
@@ -287,10 +287,9 @@ void loopLeds() {
       }
     }
   } else if (ledMode == 2) {
-    int speedMod = calcExp(ledSpeedMod, SPEED_MOD_MIN, SPEED_MOD_MAX);
+    float speedMod = SPEED_MOD_MAX + SPEED_MOD_MIN - ledSpeedMod;
+    speedMod = calcExp(speedMod, SPEED_MOD_MIN, SPEED_MOD_MAX);
     int timeBetweenColorChange = map(speedMod, SPEED_MOD_MIN, SPEED_MOD_MAX, LED_TOGGLE_TIME_MIN, LED_TOGGLE_TIME_MAX);
-    // Flip because we start with the slowest changes.
-    timeBetweenColorChange = LED_TOGGLE_TIME_MAX + LED_TOGGLE_TIME_MIN - timeBetweenColorChange;
     if (millis() - lastColorChange >= timeBetweenColorChange) {
       lastColorChange = millis();
 
@@ -386,7 +385,7 @@ void loopMotors() {
         speedMod *= MOTOR_DEPTH_SPEEDS[motor];
       }
 
-      int pwm = calcExp(speedMod, MOTOR_MIN_PWM, PWM_MAX, 1.5);
+      int pwm = calcExp(speedMod, MOTOR_MIN_PWM, PWM_MAX, 2.5);
       pwmDriver.setPWM(motor + 9, 0, pwm);
     }
   }
