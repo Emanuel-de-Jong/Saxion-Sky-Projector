@@ -10,4 +10,7 @@ With the high power LEDS, I also had to take heat into account in multiple place
 
 | | |
 | :---: | :---: |
-| ![](/Screenshots/.png) | ![](/Screenshots/.png) |
+| ![](/Screenshots/1-Running.png) | ![](/Screenshots/2-Discs.png) |
+| ![](/Screenshots/3-LEDs.png) | ![](/Screenshots/4-Accessories.png) |
+| ![](/Screenshots/5-Inside.png) | ![](/Screenshots/6-Schematic.png) |
+| ![](/Screenshots/7-3D_Model.png) | ![](/Screenshots/.png) |
