@@ -5,8 +5,8 @@ A DIY controllable and customizable 3-in-1 sky projector. The code is nothing sp
 
 With the high power LEDS, I also had to take heat into account in multiple places. Aluminium bases, a fan and even a thick heatsink were needed.
 
-**Active Development:** <br>
-**Last Change:** <br>
+**Active Development:** 2025-03-17 - 2025-04-21<br>
+**Last Change:** 2025-05-08<br>
 
 | | |
 | :---: | :---: |
